@@ -15,5 +15,8 @@ use App\Http\Controllers\HomeController;
 */
 
 Route::get('/index/{token}', [HomeController::class, 'index']);
+Route::get('/citas/{token}', [HomeController::class, 'citas']);
+Route::post('/buscarMedicos', [HomeController::class, 'buscarMedicos']);
 Route::post('/buscarTurnos', [HomeController::class, 'buscarTurnos']);
 Route::post('/asignarTurno', [HomeController::class, 'asignarTurno']);
+

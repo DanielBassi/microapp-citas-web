@@ -1,4 +1,4 @@
-var turnos;
+var turno, turnos;
 
 $.ajaxSetup({
     headers: {
@@ -6,11 +6,30 @@ $.ajaxSetup({
     }
 });
 
+function buscarMedicos(item) {
+    $.ajax({
+        type: "POST",
+        url: "/buscarMedicos",
+        data: { codigoMedico: item },
+        dataType: 'JSON',
+        success: function(response) {
+            $.each(response, function(index, item) {
+                $("#medico").append(`<option value="${item.codigoMedico}">${item.nombreMedico}</option>`);
+            });
+        },
+    });
+}
+
 function buscarTurnos() {
+    $("#btnBuscarTurnos").prop("disabled", true);
     $.ajax({
         type: "POST",
         url: "/buscarTurnos",
-        data: {},
+        data: {
+            codEspecialidad: $("#especialidad").val(),
+            codMedico: $("#medico").val(),
+            jornada: $("#jornada").val()
+        },
         dataType: 'JSON',
         success: function(response) {
             clearHtml();
@@ -18,6 +37,7 @@ function buscarTurnos() {
             $.each(response, function(index, item) {
                 $("#turnos").append(draw(item));
             });
+            $("#btnBuscarTurnos").prop("disabled", false);
         },
     });
 }
@@ -37,17 +57,30 @@ function draw(turno) {
             </div>';
 }
 
+function confirmarCita() {
+    $("#btnConfirmar").prop("disabled", true);
+    $.ajax({
+        type: "POST",
+        url: "/asignarTurno",
+        data: { id_turno: turno.id_turno },
+        dataType: 'JSON',
+        success: function(response) {
+            $(".alert").prop("hidden", false);
+            $(".table tr")[3].hidden = false;
+            $(".table td")[3].textContent = response.consultorio;
+            $("#btnConfirmar").prop("disabled", false);
+        },
+    });
+}
+
 $('body').on('click', '.fadeInUp', function(e) {
-    let turno = turnos.find(x => x.id_turno == e.currentTarget.id);
-    if (window.confirm("¿Esta seguro que desea asignar el turno de la fecha " + turno.fecha_turno + "?")) {
-        $.ajax({
-            type: "POST",
-            url: "/asignarTurno",
-            data: { id_turno: turno.id_turno },
-            dataType: 'JSON',
-            success: function(response) {
-                console.log(response);
-            },
-        });
-    }
+    turno = turnos.find(x => x.id_turno == e.currentTarget.id);
+
+    /* Agregar detalles del turno al modal */
+    $("#modalAsignaTurnoLabel").text(`Confirmar turno de ${turno.nombre_tur}`);
+    $(".table td")[0].textContent = turno.fecha_turno;
+    $(".table td")[1].textContent = turno.nombre_spc;
+    $(".table td")[2].textContent = turno.nombre_med;
+
+    $("#modalAsignaTurno").modal('show');
 });
